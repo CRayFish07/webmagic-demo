@@ -74,6 +74,7 @@ public class JDCommentsCrawl implements PageProcessor {
         Html html = page.getHtml();
         String productId = html.xpath("//*[@id='preview']/div[@class='preview-info']/div[@class='left-btns']/a[1]/@data-id").toString();
         System.out.println("productId:" + productId);
+        page.putField("productId", productId);
 
         String shopName = html.xpath("//*[@id=\"crumb-wrap\"]/div/div[2]/div/div[1]/div/a/text()").toString();
         System.out.println("shopName:" + shopName);
