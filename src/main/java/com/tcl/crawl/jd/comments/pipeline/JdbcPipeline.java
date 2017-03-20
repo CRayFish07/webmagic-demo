@@ -1,0 +1,70 @@
+package com.tcl.crawl.jd.comments.pipeline;
+
+import com.tcl.crawl.jd.comments.dao.CommentDao;
+import com.tcl.crawl.jd.comments.dao.ProductDao;
+import com.tcl.crawl.jd.comments.dao.ReplyDao;
+import com.tcl.crawl.jd.comments.model.Comment;
+import com.tcl.crawl.jd.comments.model.Product;
+import com.tcl.crawl.jd.comments.model.Reply;
+import com.tcl.crawl.jd.comments.util.UrlEnum;
+import org.apache.commons.beanutils.BeanUtils;
+import us.codecraft.webmagic.ResultItems;
+import us.codecraft.webmagic.Task;
+import us.codecraft.webmagic.pipeline.Pipeline;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Created by tangb on 2017/3/18.
+ */
+public class JdbcPipeline implements Pipeline {
+
+    private ProductDao productDao = new ProductDao();
+
+    private CommentDao commentDao = new CommentDao();
+
+    private ReplyDao replyDao = new ReplyDao();
+
+    public void process(ResultItems resultItems, Task task) {
+        String url = resultItems.getRequest().getUrl();
+        Map<String, Object> map = resultItems.getAll();
+        // 商品数据入库
+        if(url.startsWith(UrlEnum.PRODUCT_ITEM.getUrl())){
+            Product p = new Product();
+            try {
+                BeanUtils.copyProperties(p, map);
+                p.setInsertTime(new Date());
+                productDao.insert(p);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+        // 评论数据入口
+        else if(url.startsWith(UrlEnum.PRODUCT_COMMENT.getUrl())){
+            List<Comment> cs = (List<Comment>) map.get("commentList");
+            if(cs != null && !cs.isEmpty()){
+                for (Comment comment : cs){
+                    comment.setInsertTime(new Date());
+                    commentDao.insert(comment);
+                }
+            }
+        }
+        // 回复数据入口
+        else if(url.startsWith(UrlEnum.PRODUCT_REPLY.getUrl())){
+            List<Reply> replys = (List<Reply>)map.get("replyContents");
+            if(!replys.isEmpty()){
+                for (Reply reply : replys){
+                    reply.setInsertTime(new Date());
+                    replyDao.insert(reply);
+                }
+            }
+        }
+    }
+
+}
