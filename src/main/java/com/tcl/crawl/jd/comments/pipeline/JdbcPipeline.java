@@ -47,6 +47,13 @@ public class JdbcPipeline implements Pipeline {
         }
         // 评论数据入口
         else if(url.startsWith(UrlEnum.PRODUCT_COMMENT.getUrl())){
+
+            String productId = String.valueOf(map.get("productId"));
+            Double goodRate = Double.valueOf(String.valueOf(map.get("goodRate")));
+            String goodRateTag = String.valueOf(map.get("goodRateTag"));
+            // 根据评论数据返回的好评标签更新商品的好评率和好评标签
+            productDao.updateGoodRate(productId, goodRate, goodRateTag);
+            // 存储评论数据
             List<Comment> cs = (List<Comment>) map.get("commentList");
             if(cs != null && !cs.isEmpty()){
                 for (Comment comment : cs){

@@ -36,7 +36,11 @@ public class ProductDao extends AbstractDao<Product>{
 
     public void updateGoodRate(String productId, Double goodRate, String goodRateTag){
         String updateSql = "update `crawl_comments`.`tbl_jd_product` set good_rate = ?, good_rate_tag = ? where product_id = ? " +
-                "and insert_time = (select max(insert_time) from `crawl_comments`.`tbl_jd_product` where product_id = ?)";
+                "and insert_time = (" +
+                "select insert_time from ( " +
+                "select max(insert_time) from `crawl_comments`.`tbl_jd_product` where product_id = ?" +
+                ") tmp" +
+                ")";
         QueryRunner run = dbh.getRunner();
         Object[] params = {goodRate, goodRateTag, productId, productId};
         try {

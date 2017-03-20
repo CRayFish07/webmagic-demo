@@ -20,7 +20,7 @@ import us.codecraft.webmagic.selector.Json;
 
 public class JDCommentsCrawl implements PageProcessor {
 
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(1000);
+    private Site site = Site.me().setRetryTimes(3).setSleepTime(3000);
 
     private SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
@@ -84,6 +84,9 @@ public class JDCommentsCrawl implements PageProcessor {
         page.putField("productId", productId);
 
         String shopName = html.xpath("//div[@id='crumb-wrap']/div[@class='w']/div[@class='contact']/div/div[@class='item']/div[@class='name']/a/text()").toString();
+        if(shopName == null){
+           shopName = html.xpath("//div[@id='crumb-wrap']/div[@class='w']/div[@class='contact']/div/div[@class='item']/div[@class='name']/em/text()").toString();
+        }
         page.putField("shopName", shopName);
 
         String skuName = html.xpath("//div[@class='itemInfo-wrap']/div[@class='sku-name']/text()").toString();
@@ -97,7 +100,7 @@ public class JDCommentsCrawl implements PageProcessor {
         for (String dataSku : dataSkus) {
             if (!DoneProduct.isDone(dataSku)) {
                 String dataSkuUrl = UrlUtil.getProductUrlByProductId(dataSku);
-                // page.addTargetRequest(dataSkuUrl);
+                page.addTargetRequest(dataSkuUrl);
             }
         }
 
@@ -117,7 +120,25 @@ public class JDCommentsCrawl implements PageProcessor {
         String jsonStr = json.toString();
         JSONObject commentJsonObj = JSONObject.parseObject(jsonStr);
         Integer maxPage = commentJsonObj.getInteger("maxPage");
-        String productId = commentJsonObj.getJSONObject("productCommentSummary").getString("skuId");
+        JSONObject productCommentSummary = commentJsonObj.getJSONObject("productCommentSummary");
+        String productId = productCommentSummary.getString("skuId");
+        page.putField("productId", productId);
+
+        Double goodRate = productCommentSummary.getDouble("goodRateShow");
+        page.putField("goodRate", goodRate);
+
+        JSONArray commentTagsJsonArray = commentJsonObj.getJSONArray("hotCommentTagStatistics");
+        if (null != commentTagsJsonArray && commentTagsJsonArray.size() > 0) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < commentTagsJsonArray.size(); i++) {
+                JSONObject commentTagJson = commentTagsJsonArray.getJSONObject(i);
+                String key = commentTagJson.getString("name");
+                Integer value = commentTagJson.getInteger("count");
+                sb.append(key).append("(").append(value).append(") ");
+            }
+            page.putField("goodRateTag", sb);
+        }
+
         if(maxPage == null || (maxPage - 0 == 0)){
             return;
         }else{
