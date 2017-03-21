@@ -1,16 +1,22 @@
 package com.tcl.crawl.ip.proxy;
 
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class IPUtils {
+
+    private static Logger log = Logger.getLogger(IPUtils.class);
+
+    public static Boolean checkProxyIp(String proxyIp, int proxyPort) {
+        String reqUrl = "http://www.baidu.com";
+        return checkProxyIp(proxyIp, proxyPort, reqUrl);
+    }
 
     /**
      * 代理IP有效检测
@@ -37,7 +43,7 @@ public class IPUtils {
             else
                 return false;
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn(e.getMessage());
         } finally {
             if (httpGet != null) {
                 httpGet.abort();
@@ -48,9 +54,13 @@ public class IPUtils {
 
     public static void main(String[] args) {
         String url = "http://www.baidu.com";
-        String proxyIp = "124.88.67.54";
-        int proxyPort = 80;
 
-        System.out.println(checkProxyIp(proxyIp, proxyPort, url));
+        Map<String, Integer> uncertainMap = new HashMap<String, Integer>();
+        uncertainMap.put("115.231.175.68", 8081);
+
+        for (String proxyIp : uncertainMap.keySet()){
+            System.out.println(checkProxyIp(proxyIp, uncertainMap.get(proxyIp), url));
+        }
+
     }
 }
