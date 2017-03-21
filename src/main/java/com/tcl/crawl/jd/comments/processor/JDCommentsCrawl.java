@@ -6,11 +6,13 @@ import java.util.*;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.tcl.crawl.ip.proxy.HttpUserAgent;
 import com.tcl.crawl.jd.comments.model.Comment;
 import com.tcl.crawl.jd.comments.model.Reply;
 import com.tcl.crawl.jd.comments.util.DoneProduct;
 import com.tcl.crawl.jd.comments.util.UrlEnum;
 import com.tcl.crawl.jd.comments.util.UrlUtil;
+import org.apache.log4j.Logger;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
@@ -20,7 +22,9 @@ import us.codecraft.webmagic.selector.Json;
 
 public class JDCommentsCrawl implements PageProcessor {
 
-    private Site site = Site.me().setRetryTimes(3).setSleepTime(3000);
+    private Logger log = Logger.getLogger(this.getClass());
+
+    private Site site = Site.me().setRetryTimes(5).setSleepTime(1000).setUserAgent(HttpUserAgent.get());
 
     private SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
@@ -32,6 +36,15 @@ public class JDCommentsCrawl implements PageProcessor {
 
     public void process(Page page) {
         String url = page.getUrl().toString();
+        if(null == page.getHtml()){
+            try {
+                log.warn("#################  html为空，线程休眠10分钟");
+                Thread.sleep(10 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         // if 页面是商品列表页，商品列表页处理
         if(url.startsWith(UrlEnum.PRODUCT_LIST.getUrl())){
             processProductList(page);
@@ -61,10 +74,9 @@ public class JDCommentsCrawl implements PageProcessor {
         if (!items.isEmpty()) {
             for (String producrUrl : items) {
                 String productId = getProductId(producrUrl);
-                if (DoneProduct.isDone(productId)) {
-                    DoneProduct.add(productId);
-                } else {
+                if (!DoneProduct.isDone(productId)) {
                     // 种子生成：从商品列表页中提取商品详情页的连接数据，放入爬虫
+                    DoneProduct.add(productId);
                     page.addTargetRequest(new Request(producrUrl));
                 }
             }
@@ -115,11 +127,30 @@ public class JDCommentsCrawl implements PageProcessor {
      */
     private void processProductComments(Page page) {
         Json json = page.getJson();
+        if(null == json){
+            try {
+                log.warn("#################  json为空，线程休眠10分钟");
+                Thread.sleep(10 * 60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         // TODO: 现阶段一次对全部的数据进行请求，后续需要修改为增量请求评论数据
         // 种子生成：获取第一次评论后得到maxPage，然后拼接出所有的评论连接，放入爬虫进行爬取
         String jsonStr = json.toString();
-        JSONObject commentJsonObj = JSONObject.parseObject(jsonStr);
-        Integer maxPage = commentJsonObj.getInteger("maxPage");
+        JSONObject commentJsonObj = null;
+        Integer maxPage = 1;
+        try {
+            commentJsonObj = JSONObject.parseObject(jsonStr);
+            maxPage = commentJsonObj.getInteger("maxPage");
+        }catch (Exception e){
+            try {
+                Thread.sleep(10 * 60 * 1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+            return;
+        }
         JSONObject productCommentSummary = commentJsonObj.getJSONObject("productCommentSummary");
         String productId = productCommentSummary.getString("skuId");
         page.putField("productId", productId);
@@ -142,8 +173,15 @@ public class JDCommentsCrawl implements PageProcessor {
         if(maxPage == null || (maxPage - 0 == 0)){
             return;
         }else{
-            for(int pageNum = 1; pageNum <= maxPage; pageNum++){
-                page.addTargetRequest(UrlUtil.getProductCommentsUrl(productId, String.valueOf(pageNum)));
+            String url = page.getUrl().toString();
+            if (url.contains("page=0")){
+                int num = 500;
+                if(maxPage <= num){
+                    num = maxPage;
+                }
+                for(int pageNum = 1; pageNum <= num; pageNum++){
+                    page.addTargetRequest(UrlUtil.getProductCommentsUrl(productId, String.valueOf(pageNum)));
+                }
             }
         }
         JSONArray comments = commentJsonObj.getJSONArray("comments");
