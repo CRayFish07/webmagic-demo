@@ -41,7 +41,7 @@ public class CheckProxyIpPipeline implements Pipeline {
                     if (isProxy) {
                         System.out.println(proxyIps.get(i) + ProxyIPPool.SPLIT + Integer.valueOf(proxyPorts.get(i)) + " is ok");
                         ProxyIPPool.add(proxyIps.get(i), Integer.valueOf(proxyPorts.get(i)));
-                        printWriter.println(proxyIps.get(i) + ProxyIPPool.SPLIT  + Integer.valueOf(proxyPorts.get(i)));
+                        printWriter.append(proxyIps.get(i) + ProxyIPPool.SPLIT + Integer.valueOf(proxyPorts.get(i)) + "\n");
                     }
 
                     if(i % 10 == 0){
