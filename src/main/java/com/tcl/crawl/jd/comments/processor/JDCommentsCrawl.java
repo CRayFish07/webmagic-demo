@@ -1,22 +1,34 @@
 package com.tcl.crawl.jd.comments.processor;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.tcl.crawl.ip.proxy.HttpUserAgent;
+import com.tcl.crawl.ip.proxy.IPUtils;
+import com.tcl.crawl.ip.proxy.ip.utils.ProxyIPPool;
 import com.tcl.crawl.jd.comments.model.Comment;
 import com.tcl.crawl.jd.comments.model.Reply;
 import com.tcl.crawl.jd.comments.util.DoneProduct;
 import com.tcl.crawl.jd.comments.util.UrlEnum;
 import com.tcl.crawl.jd.comments.util.UrlUtil;
 import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Request;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.processor.PageProcessor;
+import us.codecraft.webmagic.proxy.ProxyPool;
+import us.codecraft.webmagic.proxy.SimpleProxyPool;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Json;
 
@@ -24,13 +36,35 @@ public class JDCommentsCrawl implements PageProcessor {
 
     private Logger log = Logger.getLogger(this.getClass());
 
-    private Site site = Site.me().setRetryTimes(5).setSleepTime(1000).setUserAgent(HttpUserAgent.get());
-
+    private Site site = null;
     private SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
     private SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd hh:mm");
 
     public Site getSite() {
+        // 设置请求参数
+        site = Site.me()
+                .setRetryTimes(5)
+                .setSleepTime(1000)
+                .setUserAgent(HttpUserAgent.get());
+
+        // 加载代理IP文件
+        String basepath = System.getProperty("user.dir");
+        String resultpath = basepath + "/data/webmagic/proxyip.txt";
+
+        List<String[]> proxyPool = new ArrayList<String[]>();
+        try {
+            List<String> proxyIps = Files.readLines(new File(resultpath), Charsets.UTF_8);
+            if(proxyIps != null && proxyIps.size() > 0){
+                for (String proxy : proxyIps) {
+                    proxyPool.add(proxy.split(ProxyIPPool.SPLIT));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // site.setHttpProxyPool(proxyPool, true);
         return site;
     }
 
@@ -222,26 +256,23 @@ public class JDCommentsCrawl implements PageProcessor {
         for (String replyItem : replyItems){
             Reply reply = new Reply();
 
-            String content = replyItem.replaceAll("\\<.*?>", "").replaceAll("(?m)^\\s*$(\\n|\\r\\n)", "");
-            System.out.println(content);
-            if(content != null){
-                String[] contentArr = content.split("\n");
-                if(contentArr != null && contentArr.length >= 3){
-                    String info = contentArr[0];
-                    String replyTime = contentArr[2];
+            Document replyDoc = Jsoup.parse(replyItem);
+            Elements tt = replyDoc.select("div.tt");
+            String info = tt.text();
 
-                    String replyUser = info.substring(0, info.indexOf(":"));
-                    String replyContent = info.substring(info.indexOf(":") + 1);
+            Elements timeDoc = replyDoc.select("span.time");
+            String replyTime = timeDoc.text();
 
-                    reply.setProductId(productId);
-                    reply.setCommentGuid(guid);
-                    reply.setType(1);
-                    reply.setReplyComment(replyContent);
-                    reply.setReplyUser(replyUser);
-                    reply.setReplyTime(parse(replyTime));
-                    replyContents.add(reply);
-                }
-            }
+            String replyUser = info.substring(0, info.indexOf(":"));
+            String replyContent = info.substring(info.indexOf(":") + 1);
+
+            reply.setProductId(productId);
+            reply.setCommentGuid(guid);
+            reply.setType(1);
+            reply.setReplyComment(replyContent);
+            reply.setReplyUser(replyUser);
+            reply.setReplyTime(parse(replyTime));
+            replyContents.add(reply);
         }
         page.putField("replyContents", replyContents);
     }
