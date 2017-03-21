@@ -21,6 +21,7 @@ public class Comment {
     private String userClient;
     private Date creationTime;
     private Date insertTime;
+    private String url;
 
     public String getId() {
         return id;
@@ -132,5 +133,13 @@ public class Comment {
 
     public void setScore(Integer score) {
         this.score = score;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

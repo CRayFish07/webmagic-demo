@@ -15,6 +15,7 @@ public class Reply {
     private String productId;
     private String commentGuid;
     private Date insertTime;
+    private String url;
 
     public String getId() {
         return id;
@@ -78,5 +79,13 @@ public class Reply {
 
     public void setProductId(String productId) {
         this.productId = productId;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

@@ -28,7 +28,7 @@ public class UrlUtil {
      * @return
      */
     public static String getProductCommentsUrl(String productId) {
-        return getProductCommentsUrl(productId, "0", "1");
+        return getProductCommentsUrl(productId, "0", "0");
     }
 
     public static String getProductCommentsUrl(String productId, String page) {

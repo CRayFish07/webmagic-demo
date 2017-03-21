@@ -24,7 +24,7 @@ public class ProductDao extends AbstractDao<Product>{
             log.warn("商品对象为null");
             return;
         }
-        String insertSql = "insert into `crawl_comments`.`tbl_jd_product`(`id`,`shop_name`,`sku_name`,`sku_url`,`sku_version`,`insert_time`,`good_rate`,`good_rate_tag`,`product_id`)values(?,?,?,?,?,?,?,?,?)";
+        String insertSql = "insert into  `tbl_jd_product`(`id`,`shop_name`,`sku_name`,`sku_url`,`sku_version`,`insert_time`,`good_rate`,`good_rate_tag`,`product_id`)values(?,?,?,?,?,?,?,?,?)";
         QueryRunner run = dbh.getRunner();
         Object[] params = {UUID.randomUUID().toString(), product.getShopName(), product.getSkuName(), product.getSkuUrl(), product.getSkuVersion(), product.getInsertTime(), product.getGoodRate(), product.getGoodRateTag(), product.getProductId()};
         try {
@@ -35,10 +35,10 @@ public class ProductDao extends AbstractDao<Product>{
     }
 
     public void updateGoodRate(String productId, Double goodRate, String goodRateTag){
-        String updateSql = "update `crawl_comments`.`tbl_jd_product` set good_rate = ?, good_rate_tag = ? where product_id = ? " +
+        String updateSql = "update  `tbl_jd_product` set good_rate = ?, good_rate_tag = ? where product_id = ? " +
                 "and insert_time = (" +
                 "select insert_time from ( " +
-                "select max(insert_time) from `crawl_comments`.`tbl_jd_product` where product_id = ?" +
+                "select max(insert_time) from  `tbl_jd_product` where product_id = ?" +
                 ") tmp" +
                 ")";
         QueryRunner run = dbh.getRunner();
