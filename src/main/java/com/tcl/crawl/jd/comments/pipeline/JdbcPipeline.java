@@ -58,6 +58,7 @@ public class JdbcPipeline implements Pipeline {
             if(cs != null && !cs.isEmpty()){
                 for (Comment comment : cs){
                     comment.setInsertTime(new Date());
+                    comment.setUrl(url);
                     commentDao.insert(comment);
                 }
             }
@@ -68,6 +69,7 @@ public class JdbcPipeline implements Pipeline {
             if(!replys.isEmpty()){
                 for (Reply reply : replys){
                     reply.setInsertTime(new Date());
+                    reply.setUrl(url);
                     replyDao.insert(reply);
                 }
             }

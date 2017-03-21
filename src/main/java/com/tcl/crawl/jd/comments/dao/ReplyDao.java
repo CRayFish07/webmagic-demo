@@ -23,9 +23,9 @@ public class ReplyDao extends AbstractDao<Reply>{
             log.warn("回复对象为null");
             return;
         }
-        String insertSql = "insert into`crawl_comments`.`tbl_jd_reply`(`id`,`type`, `reply_comment`,`reply_time`,`reply_user`,`comment_guid`,`insert_time`, `product_id`)values(?,?,?,?,?,?,?,?)";
+        String insertSql = "insert into `tbl_jd_reply`(`id`,`type`, `reply_comment`,`reply_time`,`reply_user`,`comment_guid`,`insert_time`, `product_id`,`url`)values(?,?,?,?,?,?,?,?,?)";
         QueryRunner run = dbh.getRunner();
-        Object[] params = {UUID.randomUUID().toString(), reply.getType(), reply.getReplyComment(), reply.getReplyTime(), reply.getReplyUser(), reply.getCommentGuid(), reply.getInsertTime(), reply.getProductId()};
+        Object[] params = {UUID.randomUUID().toString(), reply.getType(), reply.getReplyComment(), reply.getReplyTime(), reply.getReplyUser(), reply.getCommentGuid(), reply.getInsertTime(), reply.getProductId(), reply.getUrl()};
         try {
             run.insert(insertSql , new ArrayListHandler(), params);
         } catch (SQLException e) {

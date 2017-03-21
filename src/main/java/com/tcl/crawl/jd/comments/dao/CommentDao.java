@@ -23,9 +23,9 @@ public class CommentDao extends AbstractDao<Comment>{
             log.warn("评论对象为null");
             return;
         }
-        String insertSql = "INSERT INTO`crawl_comments`.`tbl_jd_comment`(`id`,`product_id`,`nick_name`,`comment_score`,`comment_level`,`user_level`,`comment`,`after_comment`,`useful_vote_count`,`reply_count`,`user_client`,`creation_time`,`insert_time`,`guid`)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        String insertSql = "INSERT INTO `tbl_jd_comment`(`id`,`product_id`,`nick_name`,`comment_score`,`comment_level`,`user_level`,`comment`,`after_comment`,`useful_vote_count`,`reply_count`,`user_client`,`creation_time`,`insert_time`,`guid`,`url`)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         QueryRunner run = dbh.getRunner();
-        Object[] params = {UUID.randomUUID().toString(), comment.getProductId(), comment.getNickName(), comment.getScore(), comment.getCommentLevel(), comment.getUserLevel(), comment.getComment(), comment.getAfterComment(), comment.getUsefulVoteCount(), comment.getReplyCount(), comment.getUserClient(), comment.getCreationTime(), comment.getInsertTime(), comment.getGuid()};
+        Object[] params = {UUID.randomUUID().toString(), comment.getProductId(), comment.getNickName(), comment.getScore(), comment.getCommentLevel(), comment.getUserLevel(), comment.getComment(), comment.getAfterComment(), comment.getUsefulVoteCount(), comment.getReplyCount(), comment.getUserClient(), comment.getCreationTime(), comment.getInsertTime(), comment.getGuid(), comment.getUrl()};
         try {
             run.insert(insertSql, new ArrayListHandler(), params);
         } catch (SQLException e) {
